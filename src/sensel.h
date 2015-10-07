@@ -163,7 +163,8 @@ extern "C" {
   void senselCloseConnection();
   void senselSetLEDBrightness(int idx, uint8 brightness);
   void senselSetLEDBrightnessAll(uint8 brightness);
-    
+  bool senselReadAccelerometerData(accel_data_t *accel_data);
+
     
     float getSensorWidth();
     float getSensorHeight();

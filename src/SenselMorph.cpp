@@ -20,6 +20,17 @@ void SenselMorph::setup(){
     
     numContacts = 0;
     
+    
+    for(int i=0; i<16; i++){
+        SenselLED tempLED;
+        tempLED.state = false;
+        tempLED.stateChange = false;
+        tempLED.brightness = 0;
+        tempLED.lightIndex = i;
+        leds.push_back(tempLED);
+        senselSetLEDBrightness(i, 0);
+    }
+    
 }
 
 void SenselMorph::update(){
@@ -60,9 +71,8 @@ void SenselMorph::update(){
                 event = "Error";
         }
         
-        printf("Contact ID %d, event=%s, mm coord: (%f, %f), force=%d, " \
-               "major=%f, minor=%f, orientation=%f\n",
-               id, event.c_str(), x_mm, y_mm, force, major, minor, orientation); //can be commented out when done debugging
+        //printf("Contact ID %d, event=%s, mm coord: (%f, %f), force=%d, " \
+               "major=%f, minor=%f, orientation=%f\n", id, event.c_str(), x_mm, y_mm, force, major, minor, orientation); //can be commented out when done debugging
         
         
         SenselContact tempContact;
@@ -79,7 +89,40 @@ void SenselMorph::update(){
         
         
         senselContacts.push_back(tempContact);
+    }
+    
+    accel_data_t senselAccelData;
+    if (senselReadAccelerometerData(&senselAccelData)) {
+        accelData.x = senselAccelData.x;
+        accelData.y = senselAccelData.y;
+        accelData.y = senselAccelData.z;
+    }
+    
+    //updateLights();
+    
+
+}
+
+void SenselMorph::updateLights(){
+    
+    //Can't get the logic quite right for this. It's really slow if we tell all of the lights to turn off every frame - need to have like a state changed flag and only set it to be turned off once
+    
+    for(int i=0; i< numContacts; i++){
+        float x_mm = contacts[i].x_pos_mm;
         
+        int lightIndex = lmap<int>(x_mm, 0.0, getSensorWidth(), 0.0, 16);
+        
+        for (int j=0; j<leds.size(); j++) {
+            if (lightIndex == leds[j].lightIndex && leds[j].state==false) {
+                leds[j].state=true;
+                senselSetLEDBrightness(lightIndex, 100);
+            }
+            
+            if(lightIndex != leds[j].lightIndex && leds[j].state == true ){
+                leds[j].state = false;
+                senselSetLEDBrightness(lightIndex, 0);
+            }
+        }
     }
 }
 
@@ -118,9 +161,11 @@ void SenselMorph::drawDebug(){
         //force
         gl::drawStrokedCircle(curPos, lmap<float>(senselContacts[i].force, 0,1, 0,300));
         
-        gl::drawString("Contact ID " + ci::toString(senselContacts[i].contactID)+ ", event=" + ci::toString(senselContacts[i].contactType)+ ", mm coord: (" + ci::toString(senselContacts[i].position) +" force=" + ci::toString(senselContacts[i].force)+" major=" + ci::toString(senselContacts[i].majorAxis) + ", minor=" + ci::toString(senselContacts[i].minorAxis)+ ", orientation=" + ci::toString(senselContacts[i].orientation), vec2(0,20+i*20));
-        
+        gl::drawString("Contact ID " + ci::toString(senselContacts[i].contactID)+ ", event=" + ci::toString(senselContacts[i].contactType)+ ", mm coord: (" + ci::toString(senselContacts[i].position) +"  force=" + ci::toString(senselContacts[i].force)+" major=" + ci::toString(senselContacts[i].majorAxis) + ", minor=" + ci::toString(senselContacts[i].minorAxis)+ ", orientation=" + ci::toString(senselContacts[i].orientation), vec2(20,60+i*20));
     }
+    
+    gl::drawString("Accelerometer Data: " + ci::toString(accelData), vec2(20,20));
+
     
 }
 

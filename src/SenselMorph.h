@@ -33,20 +33,33 @@ public:
         string contactType;
     };
     
+    struct SenselLED{
+        bool state; //off or on
+        bool stateChange;
+        int brightness;
+        int lightIndex;
+    };
+    
     
     contact_t contacts[MAX_CONTACTS];
     int numContacts;
     
     void setup();
     void update();
+    void updateLights();
     void drawDebug();
     
     vector<SenselContact> senselContacts;
     
     vector<SenselContact> getContacts(){ return senselContacts;}
     
+    vec3 getAccelData() {return accelData; }
+    
+    vector<SenselLED> leds;
     
     void close();
+    
+    vec3 accelData;
     
     
 };
